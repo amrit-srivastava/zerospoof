@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="ZeroSpoof - Email Security Scanner. Check your domain's MX, SPF, DKIM, and DMARC configuration.">
+    <meta name="description"
+        content="ZeroSpoof - Email Security Scanner. Check your domain's MX, SPF, DKIM, and DMARC configuration.">
     <title>ZeroSpoof - Email Security Scanner</title>
     <link rel="stylesheet" href="/static/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
     <div class="container">
         <!-- Header -->
@@ -24,17 +27,11 @@
             <div class="search-section">
                 <h1 class="title">Check Your Email Security</h1>
                 <p class="subtitle">Analyze your domain's MX, SPF, DKIM, and DMARC configuration</p>
-                
+
                 <form id="scanForm" class="search-form">
                     <div class="input-wrapper">
-                        <input 
-                            type="text" 
-                            id="domainInput" 
-                            class="domain-input" 
-                            placeholder="Enter domain (e.g., example.com)"
-                            autocomplete="off"
-                            required
-                        >
+                        <input type="text" id="domainInput" class="domain-input"
+                            placeholder="Enter domain (e.g., example.com)" autocomplete="off" required>
                         <button type="submit" class="scan-button" id="scanButton">
                             <span class="button-text">Scan</span>
                             <span class="button-loader" hidden></span>
@@ -58,6 +55,10 @@
                         <p class="provider-info" id="providerInfo"></p>
                         <p class="version-info" id="versionInfo"></p>
                     </div>
+                    <button class="download-button" id="downloadPdfBtn" title="Download PDF Report">
+                        <span class="download-icon">📥</span>
+                        <span>Download PDF</span>
+                    </button>
                 </div>
 
                 <!-- Controls Grid -->
@@ -119,4 +120,5 @@
 
     <script src="/static/app.js"></script>
 </body>
+
 </html>

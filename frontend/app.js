@@ -11,9 +11,13 @@ const buttonText = scanButton.querySelector('.button-text');
 const buttonLoader = scanButton.querySelector('.button-loader');
 const errorMessage = document.getElementById('errorMessage');
 const resultsSection = document.getElementById('resultsSection');
+const downloadPdfBtn = document.getElementById('downloadPdfBtn');
 
 // API endpoint
 const API_URL = '/api/check';
+
+// Store current scan result for PDF generation
+let currentScanResult = null;
 
 // Message icons
 const MESSAGE_ICONS = {
@@ -39,6 +43,7 @@ const GRADE_COLORS = {
  */
 function init() {
     scanForm.addEventListener('submit', handleScan);
+    downloadPdfBtn.addEventListener('click', generatePDF);
     domainInput.focus();
 }
 
@@ -68,6 +73,7 @@ async function handleScan(e) {
 
     try {
         const result = await scanDomain(cleanedDomain);
+        currentScanResult = result; // Store for PDF generation
         displayResults(result);
     } catch (error) {
         showError(error.message || 'Failed to scan domain. Please try again.');
@@ -274,6 +280,21 @@ function setLoading(loading) {
     buttonText.hidden = loading;
     buttonLoader.hidden = !loading;
     domainInput.disabled = loading;
+}
+
+/**
+ * Download PDF report from server
+ */
+function generatePDF() {
+    if (!currentScanResult) {
+        alert('No scan results to download. Please scan a domain first.');
+        return;
+    }
+
+    const domain = currentScanResult.domain;
+
+    // Direct navigation - browser handles download based on Content-Disposition header
+    window.location.href = `/api/download-pdf?domain=${encodeURIComponent(domain)}`;
 }
 
 // Initialize on DOM ready

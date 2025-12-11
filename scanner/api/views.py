@@ -8,8 +8,10 @@ import re
 from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
+from django.http import HttpResponse
 
 from scanner.services.scoring_engine import get_scoring_engine
+from scanner.services.pdf_generator import generate_pdf_report
 
 
 def is_valid_domain(domain: str) -> bool:
@@ -113,5 +115,53 @@ def check_domain(request):
     except Exception as e:
         return Response(
             {"error": f"Scan failed: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+def download_pdf(request):
+    """
+    Download PDF report for a domain scan.
+    
+    Query Parameters:
+        domain: The domain to scan and generate PDF for (required)
+        
+    Returns:
+        PDF file download
+    """
+    domain = request.query_params.get('domain', '').strip()
+    
+    if not domain:
+        return Response(
+            {"error": "Domain parameter is required"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Clean and validate domain
+    domain = clean_domain(domain)
+    
+    if not is_valid_domain(domain):
+        return Response(
+            {"error": "Invalid domain format"},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        # Run the scan
+        engine = get_scoring_engine()
+        result = engine.scan(domain)
+        
+        # Generate PDF
+        pdf_bytes = generate_pdf_report(result.to_dict())
+        
+        # Return PDF as download
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="zerospoof-{domain}-report.pdf"'
+        return response
+    
+    except Exception as e:
+        return Response(
+            {"error": f"PDF generation failed: {str(e)}"},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
