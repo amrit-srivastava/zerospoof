@@ -18,21 +18,22 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 class PDFReportGenerator:
     """Generates PDF reports from scan results."""
     
-    # Color definitions
-    PRIMARY_COLOR = colors.HexColor('#6366f1')
+    # Color definitions - Dunetrails Theme
+    PRIMARY_COLOR = colors.HexColor('#31469D')    # Deep Blue
+    ACCENT_COLOR = colors.HexColor('#D97B46')     # Muted Orange
     SUCCESS_COLOR = colors.HexColor('#10b981')
-    WARNING_COLOR = colors.HexColor('#f59e0b')
+    WARNING_COLOR = colors.HexColor('#D97B46')    # Muted Orange
     ERROR_COLOR = colors.HexColor('#ef4444')
-    MUTED_COLOR = colors.HexColor('#666666')
+    MUTED_COLOR = colors.HexColor('#6b7394')
     
     GRADE_COLORS = {
-        'A+': colors.HexColor('#00c853'),
-        'A': colors.HexColor('#00e676'),
-        'B': colors.HexColor('#2979ff'),
-        'C': colors.HexColor('#ffea00'),
-        'D': colors.HexColor('#ff9100'),
-        'E': colors.HexColor('#ff6d00'),
-        'F': colors.HexColor('#ff1744'),
+        'A+': colors.HexColor('#10b981'),
+        'A': colors.HexColor('#34d399'),
+        'B': colors.HexColor('#31469D'),
+        'C': colors.HexColor('#D97B46'),
+        'D': colors.HexColor('#f59e0b'),
+        'E': colors.HexColor('#f97316'),
+        'F': colors.HexColor('#ef4444'),
     }
     
     def __init__(self):

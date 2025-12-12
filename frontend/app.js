@@ -27,15 +27,15 @@ const MESSAGE_ICONS = {
     info: 'ℹ'
 };
 
-// Grade colors
+// Grade colors - Dunetrails Theme
 const GRADE_COLORS = {
-    'A+': '#00c853',
-    'A': '#00e676',
-    'B': '#2979ff',
-    'C': '#ffea00',
-    'D': '#ff9100',
-    'E': '#ff6d00',
-    'F': '#ff1744'
+    'A+': '#10b981',
+    'A': '#34d399',
+    'B': '#31469D',
+    'C': '#D97B46',
+    'D': '#f59e0b',
+    'E': '#f97316',
+    'F': '#ef4444'
 };
 
 /**
@@ -296,13 +296,14 @@ function generatePDF() {
     var doc = new jsPDF();
     var result = currentScanResult;
 
-    // Colors (RGB arrays)
-    var primaryColor = [99, 102, 241];
-    var successColor = [16, 185, 129];
-    var warningColor = [245, 158, 11];
-    var errorColor = [239, 68, 68];
+    // Colors (RGB arrays) - Dunetrails Theme
+    var primaryColor = [49, 70, 157];      // Deep Blue #31469D
+    var accentColor = [217, 123, 70];      // Muted Orange #D97B46
+    var successColor = [16, 185, 129];     // Green
+    var warningColor = [217, 123, 70];     // Muted Orange (same as accent)
+    var errorColor = [239, 68, 68];        // Red
     var textColor = [51, 51, 51];
-    var mutedColor = [128, 128, 128];
+    var mutedColor = [107, 115, 148];
 
     var yPos = 20;
     var leftMargin = 20;
