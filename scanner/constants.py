@@ -65,5 +65,5 @@ VALID_DMARC_TAGS = [
 ]
 
 # DNS configuration
-DNS_TIMEOUT = 5  # seconds
-DNS_LIFETIME = 10  # seconds
+DNS_TIMEOUT = 5  # seconds per query
+DNS_LIFETIME = 10  # seconds total lifetime

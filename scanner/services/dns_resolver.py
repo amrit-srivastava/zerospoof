@@ -32,6 +32,8 @@ class DNSResolver:
         self._resolver = dns.resolver.Resolver()
         self._resolver.timeout = timeout
         self._resolver.lifetime = lifetime
+        # Use reliable public DNS servers
+        self._resolver.nameservers = ['8.8.8.8', '8.8.4.4', '1.1.1.1']
         # Enable EDNS0 for larger UDP responses
         self._resolver.use_edns(edns=0, ednsflags=0, payload=4096)
     
@@ -251,12 +253,15 @@ class DNSResolver:
         return self.resolve_cname(dkim_domain)
 
 
-# Singleton instance for convenience
-_default_resolver = None
+# Thread-local storage for resolver instances
+import threading
+_thread_local = threading.local()
 
 def get_resolver() -> DNSResolver:
-    """Get the default DNS resolver instance."""
-    global _default_resolver
-    if _default_resolver is None:
-        _default_resolver = DNSResolver()
-    return _default_resolver
+    """
+    Get a DNS resolver instance.
+    Uses thread-local storage for thread safety in concurrent contexts.
+    """
+    if not hasattr(_thread_local, 'resolver'):
+        _thread_local.resolver = DNSResolver()
+    return _thread_local.resolver

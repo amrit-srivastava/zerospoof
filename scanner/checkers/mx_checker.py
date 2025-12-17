@@ -8,6 +8,7 @@ Scoring (10 points total):
 - +5: All MX hosts resolve (no dangling entries)
 """
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple
 
 from scanner.checkers.base import BaseChecker, CheckResult
@@ -58,15 +59,21 @@ class MXChecker(BaseChecker):
             result.add_remediation("Add MX records to enable email delivery")
             return result
         
-        # Check 2: All MX hosts resolve
+        # Check 2: All MX hosts resolve (using concurrent lookups)
         unresolved = []
         resolved = []
         
-        for priority, host in mx_records:
-            if resolver.host_exists(host):
-                resolved.append(host)
-            else:
-                unresolved.append(host)
+        def check_host(host):
+            return (host, resolver.host_exists(host))
+        
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futures = {executor.submit(check_host, host): host for _, host in mx_records}
+            for future in as_completed(futures):
+                host, exists = future.result()
+                if exists:
+                    resolved.append(host)
+                else:
+                    unresolved.append(host)
         
         result.parsed_data["resolved_hosts"] = resolved
         result.parsed_data["unresolved_hosts"] = unresolved

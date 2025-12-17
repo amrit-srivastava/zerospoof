@@ -127,6 +127,8 @@ class ScoringEngine:
         Returns:
             ScanResult with all check results and overall score
         """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+        
         result = ScanResult(domain)
         
         # First, get MX records (needed for provider detection)
@@ -134,18 +136,29 @@ class ScoringEngine:
         provider = self.provider_detector.detect(mx_records)
         result.provider = provider.value
         
-        # Run all checkers
+        # Run MX checker first (uses the data we already fetched)
         mx_result = self.mx_checker.check(domain)
         result.add_check_result(mx_result)
         
-        spf_result = self.spf_checker.check(domain)
-        result.add_check_result(spf_result)
+        # Run SPF, DKIM, and DMARC checks concurrently
+        def run_spf():
+            return self.spf_checker.check(domain)
         
-        dkim_result = self.dkim_checker.check(domain, provider=provider)
-        result.add_check_result(dkim_result)
+        def run_dkim():
+            return self.dkim_checker.check(domain, provider=provider)
         
-        dmarc_result = self.dmarc_checker.check(domain)
-        result.add_check_result(dmarc_result)
+        def run_dmarc():
+            return self.dmarc_checker.check(domain)
+        
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {
+                executor.submit(run_spf): "spf",
+                executor.submit(run_dkim): "dkim",
+                executor.submit(run_dmarc): "dmarc",
+            }
+            for future in as_completed(futures):
+                check_result = future.result()
+                result.add_check_result(check_result)
         
         # Calculate final score
         result.calculate_final_score()

@@ -14,6 +14,7 @@ Note: V1 validates DNS readiness; it does not verify live DKIM signing.
 
 import base64
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Optional, Tuple
 
 from scanner.checkers.base import BaseChecker, CheckResult
@@ -74,12 +75,19 @@ class DKIMChecker(BaseChecker):
             else COMMON_DKIM_SELECTORS
         )
         
-        for selector in selectors_to_check:
+        # Use concurrent lookups for faster scanning
+        def check_selector(selector):
             record = resolver.get_dkim_record(domain, selector)
-            if record:
-                discovered_selectors.append(selector)
-                selector_records[selector] = record
-                result.raw_records.append(f"{selector}: {record[:100]}...")
+            return (selector, record)
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {executor.submit(check_selector, s): s for s in selectors_to_check}
+            for future in as_completed(futures):
+                selector, record = future.result()
+                if record:
+                    discovered_selectors.append(selector)
+                    selector_records[selector] = record
+                    result.raw_records.append(f"{selector}: {record[:100]}...")
         
         result.parsed_data["discovered_selectors"] = discovered_selectors
         result.parsed_data["selector_count"] = len(discovered_selectors)
