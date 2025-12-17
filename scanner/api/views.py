@@ -50,7 +50,7 @@ def clean_domain(domain: str) -> str:
         domain: The domain to clean
         
     Returns:
-        Cleaned domain name
+        Cleaned domain name (root domain for email security scanning)
     """
     domain = domain.lower().strip()
     
@@ -65,6 +65,29 @@ def clean_domain(domain: str) -> str:
     
     # Remove port if present
     domain = domain.split(":")[0]
+    
+    # Remove common prefixes that shouldn't be used for email security scanning
+    # Email records (MX, SPF, DKIM, DMARC) are on the root domain
+    prefixes_to_strip = [
+        "www.",      # Common web prefix
+        "m.",        # Mobile
+        "mobile.",   # Mobile
+        "web.",      # Web prefix
+        "mail.",     # Mail subdomain
+        "webmail.",  # Webmail
+        "email.",    # Email subdomain
+        "smtp.",     # SMTP subdomain
+        "imap.",     # IMAP subdomain
+        "pop.",      # POP subdomain
+        "ftp.",      # FTP subdomain
+        "secure.",   # Secure subdomain
+        "app.",      # App subdomain
+    ]
+    
+    for prefix in prefixes_to_strip:
+        if domain.startswith(prefix):
+            domain = domain[len(prefix):]
+            break  # Only strip one prefix
     
     return domain
 
