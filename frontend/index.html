@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="ZeroSpoof - Email Security Scanner by Dunetrails. Check your domain's MX, SPF, DKIM, and DMARC configuration.">
+    <title>ZeroSpoof - Email Security Scanner | Dunetrails</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- jsPDF for client-side PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+
+<body>
+    <!-- Hero Section with Deep Blue Background -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <h1>
+                    <span class="logo-icon">🛡️</span>
+                    ZeroSpoof
+                </h1>
+            </div>
+            <p class="tagline">Email Security Scanner by Dunetrails</p>
+
+            <!-- Scan Section -->
+            <div class="scan-section">
+                <form id="scanForm" class="scan-form">
+                    <div class="input-wrapper">
+                        <input type="text" id="domainInput" class="domain-input"
+                            placeholder="Enter your domain (e.g., example.com)" autocomplete="off" required>
+                    </div>
+                    <button type="submit" class="btn-primary" id="scanButton">
+                        <span class="button-text">Scan Domain</span>
+                        <span class="button-loader" hidden></span>
+                    </button>
+                </form>
+                <p class="error-message" id="errorMessage" hidden></p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Results Section with Light Background -->
+    <main id="resultsSection" class="results-section" hidden>
+        <div class="container">
+            <!-- Score Card -->
+            <div class="score-card">
+                <div class="score-circle" id="scoreCircle">
+                    <span class="score-value" id="scoreValue">0</span>
+                    <span class="score-label">/ 100</span>
+                </div>
+                <div class="grade-badge" id="gradeBadge">F</div>
+
+                <div class="domain-info">
+                    <p class="domain-name" id="domainName"></p>
+                    <p class="provider-info" id="providerInfo"></p>
+                    <p class="version-info" id="versionInfo"></p>
+                </div>
+
+                <div class="download-container">
+                    <button class="btn-secondary" id="downloadPdfBtn">
+                        📄 Download PDF Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Controls Grid -->
+            <div class="controls-grid">
+                <!-- MX Card -->
+                <div class="control-card" id="mxCard">
+                    <div class="control-header">
+                        <div class="control-title">
+                            <span class="control-icon">📧</span>
+                            MX Records
+                        </div>
+                        <span class="control-score" id="mxScore">0/10</span>
+                    </div>
+                    <div class="control-messages" id="mxMessages"></div>
+                </div>
+
+                <!-- SPF Card -->
+                <div class="control-card" id="spfCard">
+                    <div class="control-header">
+                        <div class="control-title">
+                            <span class="control-icon">✅</span>
+                            SPF
+                        </div>
+                        <span class="control-score" id="spfScore">0/25</span>
+                    </div>
+                    <div class="control-messages" id="spfMessages"></div>
+                </div>
+
+                <!-- DKIM Card -->
+                <div class="control-card" id="dkimCard">
+                    <div class="control-header">
+                        <div class="control-title">
+                            <span class="control-icon">🔐</span>
+                            DKIM
+                        </div>
+                        <span class="control-score" id="dkimScore">0/25</span>
+                    </div>
+                    <div class="control-messages" id="dkimMessages"></div>
+                </div>
+
+                <!-- DMARC Card -->
+                <div class="control-card" id="dmarcCard">
+                    <div class="control-header">
+                        <div class="control-title">
+                            <span class="control-icon">🛡️</span>
+                            DMARC
+                        </div>
+                        <span class="control-score" id="dmarcScore">0/40</span>
+                    </div>
+                    <div class="control-messages" id="dmarcMessages"></div>
+                </div>
+            </div>
+
+            <!-- Remediation Section -->
+            <div class="remediation-section" id="remediationSection" hidden>
+                <h3 class="remediation-title">
+                    ⚡ Recommended Actions
+                </h3>
+                <ul class="remediation-list" id="remediationList"></ul>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p class="footer-text">
+                Score Profile v<span id="scoreVersion">1.0</span> •
+                <a href="https://www.dunetrails.com" class="footer-link" target="_blank">Dunetrails</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+
+</html>

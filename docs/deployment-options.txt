@@ -1,0 +1,451 @@
+================================================================================
+            ZEROSPOOF DEPLOYMENT OPTIONS FOR DUNETRAILS.COM
+================================================================================
+
+IMPORTANT: one.com does NOT support Django/Python applications.
+Their hosting only supports PHP-based websites.
+
+Below are your alternatives for hosting ZeroSpoof:
+
+================================================================================
+OPTION 1: SUBDOMAIN WITH SEPARATE HOSTING (RECOMMENDED)
+================================================================================
+
+Host ZeroSpoof on a Python-friendly platform and point a subdomain 
+(e.g., scanner.dunetrails.com) to it.
+
+Platform              | Pros                              | Pricing
+----------------------|-----------------------------------|------------------
+Railway               | Easy Django deployment, free tier | Free → $5/mo
+Render                | Free tier, auto-deploy from Git   | Free → $7/mo
+PythonAnywhere        | Django-specific, simple setup     | Free → $5/mo
+DigitalOcean App      | Reliable, scalable                | $5/mo
+Heroku                | Classic Django hosting            | $5/mo
+
+HOW TO SET UP SUBDOMAIN:
+1. Deploy ZeroSpoof to one of the platforms above
+2. Get the provided URL (e.g., zerospoof.railway.app)
+3. In one.com DNS settings, add a CNAME record:
+   - Host: scanner (creates scanner.dunetrails.com)
+   - Points to: your-app.railway.app (or equivalent)
+4. Configure the platform to accept your custom domain
+
+================================================================================
+OPTION 2: VPS (VIRTUAL PRIVATE SERVER) HOSTING
+================================================================================
+
+Get a VPS where you have full control over the server environment:
+
+Provider              | Starting Price
+----------------------|-----------------
+DigitalOcean Droplet  | $5/month
+Linode                | $5/month
+Vultr                 | $5/month
+AWS Lightsail         | $5/month
+
+Pros:
+- Full server control
+- Can host multiple projects
+- More cost-effective long-term
+
+Cons:
+- Requires server administration knowledge
+- You manage security updates, backups, etc.
+
+================================================================================
+OPTION 3: EMBED VIA IFRAME
+================================================================================
+
+Host the Django app elsewhere and embed it in an iframe on dunetrails.com.
+
+Example HTML:
+<iframe src="https://zerospoof.railway.app" width="100%" height="800px"></iframe>
+
+Pros:
+- Appears integrated with main site
+
+Cons:
+- SEO limitations
+- UX/navigation issues
+- Cross-origin restrictions
+- Not recommended for professional use
+
+================================================================================
+RECOMMENDED APPROACH: RAILWAY OR RENDER
+================================================================================
+
+Both Railway and Render offer:
+- Free tier to get started
+- Easy GitHub integration (auto-deploy on push)
+- Custom domain support with SSL
+- Environment variable management
+- Easy scaling when needed
+
+Steps to deploy on Railway:
+1. Create account at railway.app
+2. Connect your GitHub repository
+3. Railway auto-detects Django and configures build
+4. Set environment variables (SECRET_KEY, DEBUG=False, etc.)
+5. Add custom domain in Railway settings
+6. Add CNAME record in one.com DNS
+
+Steps to deploy on Render:
+1. Create account at render.com
+2. Click "New" → "Web Service"
+3. Connect GitHub repo
+4. Configure:
+   - Build Command: pip install -r requirements.txt
+   - Start Command: gunicorn zerospoof.wsgi:application
+5. Add custom domain
+6. Add CNAME record in one.com DNS
+
+================================================================================
+PRODUCTION REQUIREMENTS
+================================================================================
+
+Before deploying, ensure you:
+
+1. Set DEBUG=False in production
+2. Generate a secure SECRET_KEY
+3. Configure ALLOWED_HOSTS with your domain
+4. Set up proper CORS headers
+5. Add gunicorn to requirements.txt for production server
+6. Configure static file serving (whitenoise recommended)
+7. Set up HTTPS (most platforms provide free SSL)
+
+Add to requirements.txt for production:
+  gunicorn>=21.0
+  whitenoise>=6.0
+
+================================================================================
+INTEGRATING WITH DUNETRAILS.COM/SECURE-WORKSPACE-SCAN/
+================================================================================
+
+After deploying ZeroSpoof to Railway/Render, you have three options to 
+integrate it with your existing WordPress page at:
+https://www.dunetrails.com/secure-workspace-scan/
+
+--------------------------------------------------------------------------------
+INTEGRATION OPTION A: IFRAME EMBED (Simplest)
+--------------------------------------------------------------------------------
+
+Add this HTML to your WordPress page using a "Custom HTML" block:
+
+<iframe 
+  src="https://scanner.dunetrails.com" 
+  width="100%" 
+  height="900px" 
+  style="border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);"
+  title="Email Security Scanner"
+  loading="lazy">
+</iframe>
+
+Pros:
+- Quick and easy setup
+- Full ZeroSpoof functionality
+
+Cons:
+- Separate scrolling behavior
+- Limited SEO benefits
+- May look slightly "embedded"
+
+--------------------------------------------------------------------------------
+INTEGRATION OPTION B: API + JAVASCRIPT WIDGET (Best Experience)
+--------------------------------------------------------------------------------
+
+Host only the Django API and build the scanner UI directly in WordPress.
+This gives you full design control and feels native to your site.
+
+STEP 1: Deploy only the API to Railway/Render
+         API endpoint: https://api.dunetrails.com/api/check?domain=example.com
+
+STEP 2: Add the following JavaScript widget to your WordPress page.
+         In WordPress, add a "Custom HTML" block with this code:
+
+<!-- ZeroSpoof Scanner Widget -->
+<div id="zerospoof-scanner">
+  <div class="scanner-container">
+    <h2>Email Security Scanner</h2>
+    <p>Check your domain's email security configuration</p>
+    
+    <div class="scanner-input">
+      <input type="text" id="domain-input" placeholder="Enter domain (e.g., example.com)">
+      <button id="scan-btn" onclick="scanDomain()">Scan Now</button>
+    </div>
+    
+    <div id="scanner-results" style="display: none;">
+      <!-- Results will be injected here -->
+    </div>
+    
+    <div id="scanner-loading" style="display: none;">
+      <p>Scanning domain...</p>
+    </div>
+  </div>
+</div>
+
+<style>
+#zerospoof-scanner {
+  font-family: 'Inter', sans-serif;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.scanner-container {
+  background: linear-gradient(135deg, #31469D 0%, #1a2a5e 100%);
+  border-radius: 16px;
+  padding: 40px;
+  color: white;
+  text-align: center;
+}
+
+.scanner-input {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+#domain-input {
+  padding: 14px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 50px;
+  width: 300px;
+  outline: none;
+}
+
+#scan-btn {
+  padding: 14px 32px;
+  font-size: 16px;
+  background: #D97B46;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.2s, background 0.2s;
+}
+
+#scan-btn:hover {
+  background: #c66a38;
+  transform: scale(1.05);
+}
+
+#scanner-results {
+  margin-top: 30px;
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  color: #333;
+  text-align: left;
+}
+
+.score-badge {
+  display: inline-block;
+  padding: 8px 20px;
+  border-radius: 50px;
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.grade-a { background: #22c55e; color: white; }
+.grade-b { background: #84cc16; color: white; }
+.grade-c { background: #eab308; color: #333; }
+.grade-d { background: #f97316; color: white; }
+.grade-f { background: #ef4444; color: white; }
+
+.check-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+</style>
+
+<script>
+// IMPORTANT: Replace with your actual API URL after deployment
+const API_URL = 'https://api.dunetrails.com';
+
+async function scanDomain() {
+  const domain = document.getElementById('domain-input').value.trim();
+  if (!domain) {
+    alert('Please enter a domain');
+    return;
+  }
+  
+  const resultsDiv = document.getElementById('scanner-results');
+  const loadingDiv = document.getElementById('scanner-loading');
+  const scanBtn = document.getElementById('scan-btn');
+  
+  // Show loading
+  loadingDiv.style.display = 'block';
+  resultsDiv.style.display = 'none';
+  scanBtn.disabled = true;
+  scanBtn.textContent = 'Scanning...';
+  
+  try {
+    const response = await fetch(`${API_URL}/api/check?domain=${encodeURIComponent(domain)}`);
+    const data = await response.json();
+    
+    // Determine grade class
+    let gradeClass = 'grade-f';
+    if (data.grade.startsWith('A')) gradeClass = 'grade-a';
+    else if (data.grade === 'B') gradeClass = 'grade-b';
+    else if (data.grade === 'C') gradeClass = 'grade-c';
+    else if (data.grade === 'D' || data.grade === 'E') gradeClass = 'grade-d';
+    
+    // Build results HTML
+    resultsDiv.innerHTML = `
+      <div style="text-align: center;">
+        <span class="score-badge ${gradeClass}">Grade: ${data.grade} (${data.score}/100)</span>
+        <h3>${data.domain}</h3>
+        ${data.provider ? `<p>Provider: ${data.provider}</p>` : ''}
+      </div>
+      
+      <h4 style="margin-top: 20px;">Security Checks</h4>
+      
+      <div class="check-item">
+        <span><strong>MX Records</strong></span>
+        <span>${data.checks.mx.points}/${data.checks.mx.max_points} pts</span>
+      </div>
+      
+      <div class="check-item">
+        <span><strong>SPF</strong></span>
+        <span>${data.checks.spf.points}/${data.checks.spf.max_points} pts</span>
+      </div>
+      
+      <div class="check-item">
+        <span><strong>DKIM</strong></span>
+        <span>${data.checks.dkim.points}/${data.checks.dkim.max_points} pts</span>
+      </div>
+      
+      <div class="check-item">
+        <span><strong>DMARC</strong></span>
+        <span>${data.checks.dmarc.points}/${data.checks.dmarc.max_points} pts</span>
+      </div>
+      
+      ${data.remediation && data.remediation.length > 0 ? `
+        <h4 style="margin-top: 20px;">Recommendations</h4>
+        <ul>
+          ${data.remediation.map(r => `<li>${r}</li>`).join('')}
+        </ul>
+      ` : ''}
+    `;
+    
+    resultsDiv.style.display = 'block';
+    
+  } catch (error) {
+    resultsDiv.innerHTML = `
+      <p style="color: #ef4444;">Error scanning domain. Please try again.</p>
+    `;
+    resultsDiv.style.display = 'block';
+  } finally {
+    loadingDiv.style.display = 'none';
+    scanBtn.disabled = false;
+    scanBtn.textContent = 'Scan Now';
+  }
+}
+
+// Allow Enter key to trigger scan
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('domain-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') scanDomain();
+  });
+});
+</script>
+<!-- End ZeroSpoof Scanner Widget -->
+
+STEP 3: Update the API_URL in the script to your deployed API endpoint
+
+STEP 4: Configure CORS on your Django API to allow requests from dunetrails.com
+         In zerospoof/settings.py, ensure:
+         
+         CORS_ALLOWED_ORIGINS = [
+             "https://www.dunetrails.com",
+             "https://dunetrails.com",
+         ]
+
+Pros:
+- Seamless integration with your site design
+- Full SEO benefits
+- Best user experience
+- Lightweight (only API calls)
+
+Cons:
+- Requires copying code to WordPress
+- PDF download feature needs additional handling
+
+--------------------------------------------------------------------------------
+INTEGRATION OPTION C: SUBDOMAIN REDIRECT (Clean Separation)
+--------------------------------------------------------------------------------
+
+Use scanner.dunetrails.com as a fully branded standalone page.
+
+On your WordPress page at /secure-workspace-scan/, add a prominent button:
+
+<a href="https://scanner.dunetrails.com" 
+   style="display: inline-block; padding: 16px 32px; background: #D97B46; 
+          color: white; text-decoration: none; border-radius: 50px; 
+          font-weight: bold;">
+  Launch Email Security Scanner →
+</a>
+
+Pros:
+- Clean separation of concerns
+- Full app functionality including PDF
+- Easy to maintain
+
+Cons:
+- User leaves the main site briefly
+
+================================================================================
+CORS CONFIGURATION FOR API INTEGRATION
+================================================================================
+
+If using Option B (API integration), update your Django settings:
+
+In zerospoof/settings.py:
+
+CORS_ALLOWED_ORIGINS = [
+    "https://www.dunetrails.com",
+    "https://dunetrails.com",
+]
+
+# Or for development, allow all (not recommended for production):
+# CORS_ALLOW_ALL_ORIGINS = True
+
+================================================================================
+DNS CONFIGURATION IN ONE.COM
+================================================================================
+
+To set up scanner.dunetrails.com or api.dunetrails.com:
+
+1. Log in to one.com control panel
+2. Go to DNS Settings for dunetrails.com
+3. Add a CNAME record:
+   
+   For Railway:
+   - Type: CNAME
+   - Host: scanner (or api)
+   - Points to: your-app-name.up.railway.app
+   
+   For Render:
+   - Type: CNAME  
+   - Host: scanner (or api)
+   - Points to: your-app-name.onrender.com
+
+4. Wait for DNS propagation (usually 5-30 minutes)
+5. Configure custom domain in Railway/Render dashboard
+6. SSL certificate will be auto-provisioned
+
+================================================================================
+CONTACT
+================================================================================
+
+For questions about deployment, contact:
+Dunetrails - https://www.dunetrails.com
+
+================================================================================
