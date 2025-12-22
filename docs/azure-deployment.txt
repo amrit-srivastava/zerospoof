@@ -1,0 +1,265 @@
+================================================================================
+              AZURE DEPLOYMENT GUIDE FOR ZEROSPOOF
+================================================================================
+
+This guide covers deploying ZeroSpoof to Azure App Service (Linux/Python).
+
+================================================================================
+PREREQUISITES
+================================================================================
+
+1. Azure Account with active subscription
+2. Azure CLI installed (https://docs.microsoft.com/cli/azure/install-azure-cli)
+3. Git installed locally
+4. Python 3.10 or higher
+
+================================================================================
+AZURE RESOURCES NEEDED
+================================================================================
+
+Resource                    | Minimum Tier      | Estimated Cost
+----------------------------|-------------------|------------------
+Azure App Service Plan      | B1 (Basic)        | ~$13/month
+Azure App Service (Web App) | -                 | Included in plan
+(Optional) Custom Domain    | -                 | Varies
+
+================================================================================
+STEP 1: CREATE AZURE RESOURCES
+================================================================================
+
+Option A: Using Azure Portal
+----------------------------
+1. Go to https://portal.azure.com
+2. Click "Create a resource" → "Web App"
+3. Configure:
+   - Subscription: Your subscription
+   - Resource Group: Create new or use existing
+   - Name: zerospoof (will be: zerospoof.azurewebsites.net)
+   - Publish: Code
+   - Runtime stack: Python 3.11 or 3.12
+   - Operating System: Linux
+   - Region: Choose closest to your users
+   - Pricing Plan: B1 (Basic) or higher
+
+Option B: Using Azure CLI
+-------------------------
+# Login to Azure
+az login
+
+# Create resource group
+az group create --name zerospoof-rg --location westeurope
+
+# Create App Service Plan (Linux)
+az appservice plan create \
+  --name zerospoof-plan \
+  --resource-group zerospoof-rg \
+  --is-linux \
+  --sku B1
+
+# Create Web App
+az webapp create \
+  --name zerospoof \
+  --resource-group zerospoof-rg \
+  --plan zerospoof-plan \
+  --runtime "PYTHON:3.11"
+
+================================================================================
+STEP 2: CONFIGURE ENVIRONMENT VARIABLES
+================================================================================
+
+In Azure Portal:
+1. Go to your Web App → Configuration → Application settings
+2. Add the following settings:
+
+Name                    | Value
+------------------------|----------------------------------------
+DJANGO_SECRET_KEY       | <generate-with: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())">
+DEBUG                   | False
+ALLOWED_HOSTS           | zerospoof.azurewebsites.net,scanner.dunetrails.com
+CORS_ALLOWED_ORIGINS    | https://www.dunetrails.com,https://dunetrails.com
+SCM_DO_BUILD_DURING_DEPLOYMENT | true
+WEBSITE_HTTPLOGGING_RETENTION_DAYS | 7
+
+Using Azure CLI:
+----------------
+az webapp config appsettings set \
+  --resource-group zerospoof-rg \
+  --name zerospoof \
+  --settings \
+    DJANGO_SECRET_KEY="<your-secret-key>" \
+    DEBUG="False" \
+    ALLOWED_HOSTS="zerospoof.azurewebsites.net,scanner.dunetrails.com" \
+    CORS_ALLOWED_ORIGINS="https://www.dunetrails.com,https://dunetrails.com" \
+    SCM_DO_BUILD_DURING_DEPLOYMENT="true"
+
+================================================================================
+STEP 3: CONFIGURE STARTUP COMMAND
+================================================================================
+
+In Azure Portal:
+1. Go to your Web App → Configuration → General settings
+2. Set Startup Command:
+
+   gunicorn --bind=0.0.0.0:8000 --workers=4 --threads=2 zerospoof.wsgi:application
+
+Or use the startup.sh script:
+
+   /home/site/wwwroot/startup.sh
+
+Using Azure CLI:
+----------------
+az webapp config set \
+  --resource-group zerospoof-rg \
+  --name zerospoof \
+  --startup-file "gunicorn --bind=0.0.0.0:8000 --workers=4 zerospoof.wsgi:application"
+
+================================================================================
+STEP 4: DEPLOY THE APPLICATION
+================================================================================
+
+Option A: Deploy from GitHub (Recommended)
+------------------------------------------
+1. In Azure Portal → Web App → Deployment Center
+2. Source: GitHub
+3. Authorize and select:
+   - Organization: amrit-srivastava
+   - Repository: zerospoof
+   - Branch: main
+4. Save
+
+This enables continuous deployment - pushes to main auto-deploy.
+
+Option B: Deploy from Local Git
+-------------------------------
+# Configure local git deployment
+az webapp deployment source config-local-git \
+  --resource-group zerospoof-rg \
+  --name zerospoof
+
+# Get the deployment URL
+az webapp deployment list-publishing-credentials \
+  --resource-group zerospoof-rg \
+  --name zerospoof \
+  --query scmUri
+
+# Add Azure as a remote and push
+git remote add azure https://<deployment-username>@zerospoof.scm.azurewebsites.net/zerospoof.git
+git push azure main
+
+Option C: Deploy using Azure CLI
+--------------------------------
+# From your project directory
+az webapp up \
+  --resource-group zerospoof-rg \
+  --name zerospoof \
+  --runtime "PYTHON:3.11"
+
+================================================================================
+STEP 5: VERIFY DEPLOYMENT
+================================================================================
+
+1. Open https://zerospoof.azurewebsites.net
+2. Test API: curl https://zerospoof.azurewebsites.net/api/check?domain=google.com
+3. Check logs:
+   - Azure Portal → Web App → Log stream
+   - Or: az webapp log tail --resource-group zerospoof-rg --name zerospoof
+
+================================================================================
+STEP 6: CUSTOM DOMAIN (OPTIONAL)
+================================================================================
+
+To use scanner.dunetrails.com:
+
+1. In Azure Portal → Web App → Custom domains
+2. Add custom domain: scanner.dunetrails.com
+3. In one.com DNS settings, add:
+   
+   Type    | Host     | Value
+   --------|----------|----------------------------------
+   CNAME   | scanner  | zerospoof.azurewebsites.net
+
+4. Wait for DNS propagation (5-30 minutes)
+5. Add SSL certificate in Azure (free managed certificate available)
+
+================================================================================
+STEP 7: ENABLE HTTPS/SSL
+================================================================================
+
+Azure provides free managed SSL certificates:
+
+1. Azure Portal → Web App → TLS/SSL settings
+2. Private Key Certificates → Create App Service Managed Certificate
+3. Bind to your custom domain
+
+For azurewebsites.net domains, HTTPS is enabled by default.
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Issue: Application won't start
+------------------------------
+- Check logs: az webapp log tail --resource-group zerospoof-rg --name zerospoof
+- Verify startup command is correct
+- Ensure all environment variables are set
+
+Issue: Static files not loading
+-------------------------------
+- Run locally: python manage.py collectstatic
+- Verify WhiteNoise is in MIDDLEWARE (it is)
+- Check STATIC_ROOT is configured (it is)
+
+Issue: DNS records not found
+----------------------------
+- The app uses public DNS (8.8.8.8, 1.1.1.1)
+- Azure should have no issues with outbound DNS
+
+Issue: Slow startup
+-------------------
+- B1 tier may have cold start delays
+- Consider B2 or higher for production
+- Enable "Always On" in Configuration → General settings
+
+================================================================================
+AZURE CLI QUICK REFERENCE
+================================================================================
+
+# Login
+az login
+
+# List web apps
+az webapp list --output table
+
+# Restart app
+az webapp restart --resource-group zerospoof-rg --name zerospoof
+
+# View logs
+az webapp log tail --resource-group zerospoof-rg --name zerospoof
+
+# SSH into app
+az webapp ssh --resource-group zerospoof-rg --name zerospoof
+
+# Scale up
+az appservice plan update --resource-group zerospoof-rg --name zerospoof-plan --sku B2
+
+================================================================================
+ESTIMATED COSTS
+================================================================================
+
+Service                  | Tier | Monthly Cost (Estimate)
+-------------------------|------|------------------------
+App Service Plan (Linux) | B1   | ~$13 USD
+App Service Plan (Linux) | B2   | ~$26 USD
+Custom Domain SSL        | Free | $0 (managed certificate)
+
+Total minimum: ~$13/month
+
+================================================================================
+FILES INCLUDED FOR AZURE DEPLOYMENT
+================================================================================
+
+1. startup.sh          - Azure startup script
+2. requirements.txt    - Includes gunicorn, whitenoise
+3. settings.py         - Configured for production with WhiteNoise
+
+================================================================================
